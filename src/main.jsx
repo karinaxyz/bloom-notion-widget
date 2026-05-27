@@ -171,26 +171,6 @@ function App() {
     <main className="widget" aria-label="Bloom botanical task widget">
       <section className="art-panel" aria-live="polite">
         <DisplayDate />
-        <div className="priority-heading">
-          <img
-            className="status-icon"
-            key={statusIcon}
-            src={statusIcon}
-            alt=""
-            aria-hidden="true"
-          />
-          <h1>Priorities</h1>
-        </div>
-        {hasTasks && (
-          <button
-            className="reset-button"
-            type="button"
-            onClick={resetList}
-            aria-label="Reset list"
-          >
-            ↺
-          </button>
-        )}
         <img
           className="botanical-art"
           src={artwork}
@@ -199,6 +179,29 @@ function App() {
       </section>
 
       <section className="task-panel">
+        <div className="priority-heading">
+          <span className="priority-title">
+            <img
+              className="status-icon"
+              key={statusIcon}
+              src={statusIcon}
+              alt=""
+              aria-hidden="true"
+            />
+            <h1>Priorities</h1>
+          </span>
+          {hasTasks && (
+            <button
+              className="reset-button"
+              type="button"
+              onClick={resetList}
+              aria-label="Reset list"
+            >
+              ↺
+            </button>
+          )}
+        </div>
+
         {hasTasks && (
           <div className="task-list" aria-label="Today priorities">
             {tasks.map((task) => (
@@ -224,15 +227,14 @@ function App() {
         )}
 
         <form className="add-form" onSubmit={addTask}>
+          <span className="draft-check" aria-hidden="true" />
           <input
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder="Add a task"
-            aria-label="Add a task"
+            placeholder="Add task"
+            aria-label="Add task"
           />
-          <button type="submit" aria-label="Add task">
-            +
-          </button>
+          <button className="submit-hidden" type="submit" aria-label="Add task" />
         </form>
       </section>
     </main>
