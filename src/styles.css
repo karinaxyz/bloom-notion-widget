@@ -1,8 +1,9 @@
 :root {
-  color: #352f27;
-  background: #f7f0e3;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  color: #37352f;
+  --content-width: min(64%, 272px);
+  background: #ffffff;
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Helvetica, Arial, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -12,10 +13,12 @@
   box-sizing: border-box;
 }
 
+html,
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  background: #ffffff;
 }
 
 button,
@@ -31,19 +34,17 @@ button {
   width: min(100%, 620px);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 20px 18px 24px;
+  padding: 18px 18px 24px;
   background:
-    linear-gradient(rgba(104, 91, 62, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(104, 91, 62, 0.028) 1px, transparent 1px),
-    #f7f0e3;
+    linear-gradient(rgba(38, 61, 43, 0.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(38, 61, 43, 0.012) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
 .art-panel {
-  position: relative;
   display: grid;
   justify-items: center;
-  gap: 9px;
+  gap: 12px;
   padding: 4px 10px 0;
 }
 
@@ -55,58 +56,47 @@ h1 {
 .date-stack {
   display: grid;
   justify-items: center;
-  gap: 1px;
+  gap: 2px;
   text-align: center;
 }
 
 .weekday {
   margin: 0;
-  color: #343f2d;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(1.68rem, 7.2vw, 2.88rem);
-  font-weight: 400;
-  line-height: 0.92;
+  color: #263d2b;
+  font-size: clamp(1.38rem, 5.8vw, 2.35rem);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.05;
 }
 
 .date-line {
-  color: #8a806f;
-  font-size: 0.78rem;
-  letter-spacing: 0.1em;
+  color: rgba(38, 61, 43, 0.52);
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
   line-height: 1.4;
   text-transform: uppercase;
 }
 
-.botanical-art {
-  display: block;
-  width: min(68%, 290px);
-  max-height: 45vh;
-  object-fit: contain;
-  mix-blend-mode: multiply;
-  filter: saturate(0.94) contrast(0.98);
-}
-
-.task-panel {
-  display: grid;
-  gap: 12px;
-  margin-top: 10px;
-  padding: 12px 10px 0;
-  border-top: 1px solid rgba(124, 105, 78, 0.16);
-  background: transparent;
-}
-
 .priority-heading {
-  display: inline-flex;
+  position: relative;
+  display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 28px;
+}
+
+.priority-title {
+  display: inline-flex;
+  align-items: center;
   gap: 7px;
-  min-height: 22px;
 }
 
 .status-icon {
   width: 16px;
   height: 16px;
   image-rendering: pixelated;
-  opacity: 0.7;
+  opacity: 0.78;
   animation: status-fade 180ms ease;
   transition: opacity 180ms ease, transform 180ms ease;
 }
@@ -118,156 +108,168 @@ h1 {
   }
 
   to {
-    opacity: 0.7;
+    opacity: 0.78;
     transform: translateY(0);
   }
 }
 
 h1 {
-  color: #5f6d4d;
-  font-size: 0.92rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  color: rgba(55, 53, 47, 0.78);
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   line-height: 1.25;
   text-transform: uppercase;
 }
 
+.botanical-art {
+  display: block;
+  width: var(--content-width);
+  max-height: 42vh;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  opacity: 0.9;
+  filter: saturate(0.86) contrast(0.94) brightness(1.03);
+}
+
+.reset-button {
+  position: absolute;
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(55, 53, 47, 0.42);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.task-panel {
+  display: grid;
+  gap: 4px;
+  width: var(--content-width);
+  min-width: 250px;
+  margin: 4px auto 0;
+  padding: 0;
+  background: transparent;
+}
+
+.task-list {
+  display: grid;
+  gap: 4px;
+}
+
+.task-row,
 .add-form {
   display: grid;
-  grid-template-columns: 1fr 32px;
-  gap: 10px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+}
+
+.check-button,
+.draft-check {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+}
+
+.check-button {
+  display: grid;
+  place-items: center;
+}
+
+.check-button span,
+.draft-check::before {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: 1.4px solid rgba(55, 53, 47, 0.3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.34);
+  content: "";
+}
+
+.check-button.checked span {
+  border-color: #496342;
+  background: #496342;
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.72);
 }
 
 .add-form input,
 .task-input {
   width: 100%;
   min-width: 0;
+  min-height: 34px;
+  padding: 0;
   border: 0;
-  border-bottom: 1px solid rgba(124, 105, 78, 0.2);
   border-radius: 0;
   background: transparent;
-  color: #352f27;
-}
-
-.add-form input {
-  min-height: 38px;
-  padding: 0 2px;
+  color: #37352f;
 }
 
 .add-form input::placeholder {
-  color: #948a7a;
-}
-
-.add-form button,
-.check-button {
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(105, 121, 84, 0.18);
-  border-radius: 999px;
-  background: rgba(255, 253, 248, 0.48);
-  color: #4d5d3e;
-}
-
-.add-form button {
-  width: 32px;
-  min-height: 32px;
-  align-self: center;
-  font-size: 1.2rem;
-  line-height: 1;
-}
-
-.task-list {
-  display: grid;
-  gap: 2px;
-}
-
-.task-row {
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  min-height: 38px;
-  border-bottom: 1px solid rgba(124, 105, 78, 0.13);
-}
-
-.check-button {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-}
-
-.check-button span {
-  width: 9px;
-  height: 9px;
-  border: 1.5px solid #8b9775;
-  border-radius: 999px;
-  background: #fffdf8;
-}
-
-.check-button.checked span {
-  border-color: #75875d;
-  background: #75875d;
-  box-shadow: inset 0 0 0 3px #fffdf8;
+  color: rgba(55, 53, 47, 0.42);
 }
 
 .task-input {
-  min-height: 38px;
-  padding: 0;
-  border-bottom: 0;
   font-size: 0.95rem;
 }
 
 .task-input.done {
-  color: #7f7566;
+  color: rgba(55, 53, 47, 0.48);
   text-decoration: line-through;
+  text-decoration-thickness: 1px;
 }
 
-.reset-button {
-  position: absolute;
-  top: 76px;
-  right: 0;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid rgba(124, 105, 78, 0.16);
-  border-radius: 999px;
-  background: transparent;
-  color: #756b5a;
-  font-size: 1rem;
-  line-height: 1;
+.submit-hidden {
+  display: none;
 }
 
-.add-form button:hover,
-.check-button:hover {
-  background: rgba(228, 233, 210, 0.62);
+.check-button:hover span,
+.draft-check:hover::before {
+  border-color: rgba(55, 53, 47, 0.42);
 }
 
 .reset-button:hover {
-  border-color: rgba(124, 105, 78, 0.2);
-  background: rgba(255, 253, 248, 0.68);
+  background: rgba(55, 53, 47, 0.06);
+  color: rgba(55, 53, 47, 0.68);
 }
 
 input:focus,
 button:focus-visible {
-  outline: 3px solid rgba(117, 135, 93, 0.2);
+  outline: 2px solid rgba(55, 53, 47, 0.12);
   outline-offset: 2px;
 }
 
 @media (max-width: 430px) {
+  :root {
+    --content-width: min(76%, 250px);
+  }
+
   .widget {
     padding: 12px;
   }
 
   .botanical-art {
-    width: min(80%, 270px);
-    max-height: 42vh;
+    max-height: 40vh;
   }
 
   .task-panel {
-    padding: 12px 4px 0;
+    min-width: 230px;
   }
 
   .reset-button {
-    top: 66px;
+    right: 0;
   }
 }
