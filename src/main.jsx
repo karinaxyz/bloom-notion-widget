@@ -240,7 +240,9 @@ function App() {
   const [tasks, setTasks] = useState(readTasks);
   const [draft, setDraft] = useState('');
   const [editingTask, setEditingTask] = useState(null);
+  const addInputRef = useRef(null);
   const editInputRef = useRef(null);
+  const tasksRef = useRef([]);
 
   const validTasks = useMemo(() => normalizeTasks(tasks), [tasks]);
   const completedCount = useMemo(() => getCompletedCount(validTasks), [validTasks]);
@@ -268,6 +270,10 @@ function App() {
   }, []);
 
   useEffect(() => {
+    tasksRef.current = validTasks;
+  }, [validTasks]);
+
+  useEffect(() => {
     if (!editingTask?.id) return;
     editInputRef.current?.focus({ preventScroll: true });
   }, [editingTask?.id]);
@@ -291,11 +297,6 @@ function App() {
     saveTasks(normalizedTasks);
   }
 
-  function addTask(event) {
-    event.preventDefault();
-    addDraftTask(event.currentTarget.elements.priority?.value || draft);
-  }
-
   function addDraftTask(nextDraft = draft) {
     const trimmed = nextDraft.trim();
     if (!trimmed) {
@@ -303,8 +304,16 @@ function App() {
       return;
     }
 
-    commitTasks([...validTasks, createTask(trimmed)]);
+    commitTasks([...tasksRef.current, createTask(trimmed)]);
     setDraft('');
+
+    if (addInputRef.current) {
+      addInputRef.current.value = '';
+      addInputRef.current.style.height = '';
+      window.requestAnimationFrame(() => {
+        addInputRef.current?.focus({ preventScroll: true });
+      });
+    }
   }
 
   function updateTask(id, text) {
@@ -315,6 +324,10 @@ function App() {
 
   function cancelDraftTask() {
     setDraft('');
+    if (addInputRef.current) {
+      addInputRef.current.value = '';
+      addInputRef.current.style.height = '';
+    }
   }
 
   function beginEditTask(task) {
@@ -353,6 +366,15 @@ function App() {
     commitTasks([]);
     setDraft('');
     setEditingTask(null);
+    if (addInputRef.current) {
+      addInputRef.current.value = '';
+      addInputRef.current.style.height = '';
+    }
+  }
+
+  function resizeAddInput(element) {
+    element.style.height = 'auto';
+    element.style.height = `${element.scrollHeight}px`;
   }
 
   return (
@@ -453,15 +475,18 @@ function App() {
           </div>
         )}
 
-        <form className="add-form" onSubmit={addTask}>
+        <label className="add-form">
           <span className="add-space" aria-hidden="true">+</span>
-          <input
+          <textarea
+            ref={addInputRef}
             name="priority"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onBlur={(event) => addDraftTask(event.currentTarget.value)}
+            rows="1"
+            onInput={(event) => {
+              setDraft(event.currentTarget.value);
+              resizeAddInput(event.currentTarget);
+            }}
             onKeyDown={(event) => {
-              if (event.key === 'Enter') {
+              if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 addDraftTask(event.currentTarget.value);
               }
@@ -474,8 +499,7 @@ function App() {
             placeholder="Add a priority"
             aria-label="Add a priority"
           />
-          <button className="submit-hidden" type="submit" aria-label="Add priority" />
-        </form>
+        </label>
       </section>
     </main>
   );

@@ -373,7 +373,7 @@ h1 {
   transform: rotate(42deg);
 }
 
-.add-form input,
+.add-form textarea,
 .task-input,
 .task-text,
 .add-row {
@@ -387,6 +387,10 @@ h1 {
   color: var(--text-primary);
   box-shadow: none;
   outline: 0;
+}
+
+.add-form {
+  cursor: text;
 }
 
 .task-text,
@@ -428,7 +432,16 @@ h1 {
   color: var(--text-faint);
 }
 
-.add-form input::placeholder {
+.add-form textarea {
+  display: block;
+  height: 30px;
+  max-height: 84px;
+  resize: none;
+  overflow: hidden;
+  line-height: 1.35;
+}
+
+.add-form textarea::placeholder {
   color: var(--placeholder);
 }
 
@@ -485,8 +498,9 @@ h1 {
 }
 
 input:focus,
+textarea:focus,
 button:focus-visible,
-.add-form input:focus,
+.add-form textarea:focus,
 .task-input:focus {
   border-color: transparent;
   outline: 0;
