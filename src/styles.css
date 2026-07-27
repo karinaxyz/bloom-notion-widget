@@ -1,6 +1,24 @@
 :root {
   color: #37352f;
   --content-width: min(68%, 286px);
+  --page-bg: #ffffff;
+  --surface-bg: transparent;
+  --text-strong: rgba(55, 53, 47, 0.86);
+  --text-primary: rgba(55, 53, 47, 0.82);
+  --text-muted: rgba(55, 53, 47, 0.48);
+  --text-faint: rgba(55, 53, 47, 0.34);
+  --text-soft: rgba(55, 53, 47, 0.42);
+  --placeholder: rgba(120, 103, 112, 0.48);
+  --checkbox-border: rgba(55, 53, 47, 0.26);
+  --checkbox-border-hover: rgba(55, 53, 47, 0.46);
+  --checkbox-fill: #496342;
+  --checkbox-check: rgba(255, 255, 255, 0.9);
+  --reset-color: rgba(55, 53, 47, 0.24);
+  --reset-hover-color: rgba(55, 53, 47, 0.58);
+  --reset-hover-bg: rgba(120, 126, 156, 0.08);
+  --focus-color: rgba(125, 137, 168, 0.52);
+  --edit-underline: rgba(125, 137, 168, 0.24);
+  --art-filter: saturate(0.86) contrast(0.94) brightness(1.03);
   --glow-empty:
     radial-gradient(ellipse at 52% 23%, rgba(233, 202, 212, 0.26) 0%, rgba(233, 202, 212, 0.12) 28%, rgba(255, 255, 255, 0) 56%),
     radial-gradient(ellipse at 49% 57%, rgba(199, 214, 190, 0.18) 0%, rgba(199, 214, 190, 0.08) 38%, rgba(255, 255, 255, 0) 72%);
@@ -22,7 +40,7 @@
   --glow-complete:
     radial-gradient(ellipse at 52% 21%, rgba(244, 194, 201, 0.30) 0%, rgba(244, 194, 201, 0.14) 30%, rgba(255, 255, 255, 0) 58%),
     radial-gradient(ellipse at 49% 55%, rgba(240, 221, 193, 0.21) 0%, rgba(240, 221, 193, 0.09) 38%, rgba(255, 255, 255, 0) 72%);
-  background: #ffffff;
+  background: var(--page-bg);
   font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Helvetica, Arial, sans-serif;
   font-synthesis: none;
@@ -39,11 +57,30 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: #ffffff;
+  background: var(--page-bg);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
+    color: #dbc3df;
+    --page-bg: #171717;
+    --surface-bg: #120911;
+    --text-strong: rgba(232, 207, 235, 0.9);
+    --text-primary: rgba(219, 194, 224, 0.86);
+    --text-muted: rgba(211, 181, 216, 0.6);
+    --text-faint: rgba(199, 160, 205, 0.42);
+    --text-soft: rgba(205, 168, 211, 0.5);
+    --placeholder: rgba(207, 170, 214, 0.5);
+    --checkbox-border: rgba(211, 180, 216, 0.24);
+    --checkbox-border-hover: rgba(221, 193, 226, 0.45);
+    --checkbox-fill: #68765a;
+    --checkbox-check: rgba(248, 235, 247, 0.94);
+    --reset-color: rgba(209, 174, 216, 0.24);
+    --reset-hover-color: rgba(228, 199, 233, 0.62);
+    --reset-hover-bg: rgba(154, 113, 166, 0.14);
+    --focus-color: rgba(158, 134, 191, 0.58);
+    --edit-underline: rgba(195, 148, 201, 0.3);
+    --art-filter: saturate(0.78) contrast(0.96) brightness(0.86);
     --glow-empty:
       radial-gradient(ellipse at 52% 23%, rgba(176, 112, 130, 0.20) 0%, rgba(176, 112, 130, 0.08) 30%, rgba(0, 0, 0, 0) 58%),
       radial-gradient(ellipse at 49% 57%, rgba(117, 151, 116, 0.16) 0%, rgba(117, 151, 116, 0.065) 40%, rgba(0, 0, 0, 0) 72%);
@@ -82,7 +119,7 @@ button {
   min-height: 100vh;
   margin: 0 auto;
   padding: 14px 18px 22px;
-  background: transparent;
+  background: var(--surface-bg);
 }
 
 .art-panel {
@@ -106,7 +143,7 @@ h1 {
 
 .weekday {
   margin: 0;
-  color: rgba(55, 53, 47, 0.86);
+  color: var(--text-strong);
   font-size: clamp(1.3rem, 5.2vw, 2.16rem);
   font-weight: 600;
   letter-spacing: 0;
@@ -114,7 +151,7 @@ h1 {
 }
 
 .date-line {
-  color: rgba(55, 53, 47, 0.48);
+  color: var(--text-muted);
   font-size: 0.74rem;
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -136,7 +173,7 @@ h1 {
 }
 
 h1 {
-  color: rgba(55, 53, 47, 0.82);
+  color: var(--text-primary);
   font-size: 0.96rem;
   font-weight: 600;
   letter-spacing: 0;
@@ -228,7 +265,7 @@ h1 {
   object-fit: contain;
   object-position: center bottom;
   opacity: 0.92;
-  filter: saturate(0.86) contrast(0.94) brightness(1.03);
+  filter: var(--art-filter);
   transform-origin: 50% 100%;
   transition: opacity 300ms ease;
   animation: artwork-fade 180ms ease;
@@ -255,7 +292,7 @@ h1 {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: rgba(55, 53, 47, 0.24);
+  color: var(--reset-color);
   font-size: 1rem;
   line-height: 1;
   transition: background 140ms ease, color 140ms ease;
@@ -311,7 +348,7 @@ h1 {
   display: block;
   width: 17px;
   height: 17px;
-  border: 1.15px solid rgba(55, 53, 47, 0.26);
+  border: 1.15px solid var(--checkbox-border);
   border-radius: 2px;
   background: transparent;
   content: "";
@@ -319,8 +356,8 @@ h1 {
 }
 
 .check-button.checked span {
-  border-color: #496342;
-  background: #496342;
+  border-color: var(--checkbox-fill);
+  background: var(--checkbox-fill);
 }
 
 .check-button.checked span::after {
@@ -329,7 +366,7 @@ h1 {
   top: 1.5px;
   width: 5px;
   height: 9px;
-  border: solid rgba(255, 255, 255, 0.9);
+  border: solid var(--checkbox-check);
   border-width: 0 1.6px 1.6px 0;
   content: "";
   transform: rotate(42deg);
@@ -346,7 +383,7 @@ h1 {
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: #37352f;
+  color: var(--text-primary);
   box-shadow: none;
   outline: 0;
 }
@@ -358,18 +395,18 @@ h1 {
 }
 
 .task-text {
-  color: rgba(55, 53, 47, 0.82);
+  color: var(--text-primary);
   font-size: 0.94rem;
   line-height: 1.35;
 }
 
 .task-text:hover {
-  color: rgba(55, 53, 47, 0.95);
+  color: var(--text-strong);
 }
 
 .add-row {
   grid-template-columns: 28px minmax(0, 1fr);
-  color: rgba(55, 53, 47, 0.42);
+  color: var(--text-soft);
   font-size: 0.92rem;
   line-height: 1.35;
   transition: color 120ms ease;
@@ -379,11 +416,11 @@ h1 {
   display: grid;
   place-items: center;
   width: 26px;
-  color: rgba(55, 53, 47, 0.32);
+  color: var(--text-faint);
 }
 
 .add-form input::placeholder {
-  color: rgba(120, 103, 112, 0.48);
+  color: var(--placeholder);
 }
 
 .add-space {
@@ -397,12 +434,12 @@ h1 {
 }
 
 .task-input.editing {
-  border-bottom: 1px solid rgba(125, 137, 168, 0.24);
+  border-bottom: 1px solid var(--edit-underline);
 }
 
 .task-input.done,
 .task-text.done {
-  color: rgba(55, 53, 47, 0.48);
+  color: var(--text-muted);
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
@@ -410,7 +447,7 @@ h1 {
 .empty-note,
 .input-hint {
   margin: 0;
-  color: rgba(55, 53, 47, 0.46);
+  color: var(--text-muted);
   font-size: 0.86rem;
   line-height: 1.4;
 }
@@ -422,7 +459,7 @@ h1 {
 .input-hint {
   grid-column: 2;
   margin-top: -2px;
-  color: rgba(55, 53, 47, 0.34);
+  color: var(--text-faint);
   font-size: 0.78rem;
 }
 
@@ -431,16 +468,16 @@ h1 {
 }
 
 .check-button:hover span {
-  border-color: rgba(55, 53, 47, 0.46);
+  border-color: var(--checkbox-border-hover);
 }
 
 .reset-button:hover {
-  background: rgba(120, 126, 156, 0.08);
-  color: rgba(55, 53, 47, 0.58);
+  background: var(--reset-hover-bg);
+  color: var(--reset-hover-color);
 }
 
 .add-row:hover {
-  color: rgba(55, 53, 47, 0.62);
+  color: var(--text-muted);
 }
 
 input:focus,
@@ -453,7 +490,7 @@ button:focus-visible,
 }
 
 .check-button:focus-visible span {
-  border-color: rgba(125, 137, 168, 0.52);
+  border-color: var(--focus-color);
 }
 
 @media (prefers-reduced-motion: reduce) {
