@@ -266,6 +266,7 @@ h1 {
   object-position: center bottom;
   opacity: 0.92;
   filter: var(--art-filter);
+  pointer-events: none;
   transform-origin: 50% 100%;
   transition: opacity 300ms ease;
   animation: artwork-fade 180ms ease;

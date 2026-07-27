@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
 const LEGACY_STORAGE_KEY = 'harvest.tasks.v1';
 const STORAGE_KEY = 'bloom.tasks.v1';
 const bloomAssetPath = (filename) => `${import.meta.env.BASE_URL}bloom-display/${filename}`;
+let memoryTasks = [];
 
 const BLOOM_ARTWORK_LAYOUTS = [
   {
@@ -111,31 +112,46 @@ function normalizeTasks(value) {
 
 function readTasks() {
   try {
-    const storedValue =
-      localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    const storedValue = getStoredValue(STORAGE_KEY) || getStoredValue(LEGACY_STORAGE_KEY);
     const stored = JSON.parse(storedValue || '[]');
     const tasks = normalizeTasks(stored);
 
-    if (!localStorage.getItem(STORAGE_KEY) && tasks.length > 0) {
+    if (!getStoredValue(STORAGE_KEY) && tasks.length > 0) {
       saveTasks(tasks);
     }
 
     return tasks;
   } catch {
-    return [];
+    return memoryTasks;
   }
 }
 
 function saveTasks(tasks) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  memoryTasks = normalizeTasks(tasks);
+
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(memoryTasks));
+  } catch {
+    // Embedded surfaces can block storage. Keep the widget usable in-session.
+  }
 }
 
 function createTask(text) {
   return {
-    id: crypto.randomUUID(),
+    id:
+      window.crypto?.randomUUID?.() ||
+      `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     text: text.trim(),
     completed: false,
   };
+}
+
+function getStoredValue(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
 }
 
 function clamp(value, min, max) {
@@ -225,6 +241,8 @@ function App() {
   const [draft, setDraft] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const addInputRef = useRef(null);
+  const editInputRef = useRef(null);
 
   const validTasks = useMemo(() => normalizeTasks(tasks), [tasks]);
   const completedCount = useMemo(() => getCompletedCount(validTasks), [validTasks]);
@@ -252,6 +270,16 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!isAdding) return;
+    addInputRef.current?.focus({ preventScroll: true });
+  }, [isAdding]);
+
+  useEffect(() => {
+    if (!editingTask?.id) return;
+    editInputRef.current?.focus({ preventScroll: true });
+  }, [editingTask?.id]);
+
+  useEffect(() => {
     if (activeGlowState.background === glowState.background) return undefined;
 
     setPreviousGlowState(activeGlowState);
@@ -272,11 +300,11 @@ function App() {
 
   function addTask(event) {
     event.preventDefault();
-    addDraftTask();
+    addDraftTask(event.currentTarget.elements.priority?.value || draft);
   }
 
-  function addDraftTask() {
-    const trimmed = draft.trim();
+  function addDraftTask(nextDraft = draft) {
+    const trimmed = nextDraft.trim();
     if (!trimmed) {
       cancelDraftTask();
       return;
@@ -405,7 +433,7 @@ function App() {
                 </button>
                 {editingTask?.id === task.id ? (
                   <input
-                    autoFocus
+                    ref={editInputRef}
                     className={task.completed ? 'task-input editing done' : 'task-input editing'}
                     value={editingTask.text}
                     onChange={(event) =>
@@ -444,14 +472,15 @@ function App() {
           <form className="add-form adding" onSubmit={addTask}>
             <span className="add-space" aria-hidden="true" />
             <input
-              autoFocus
+              ref={addInputRef}
+              name="priority"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              onBlur={addDraftTask}
+              onBlur={(event) => addDraftTask(event.currentTarget.value)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') {
                   event.preventDefault();
-                  addDraftTask();
+                  addDraftTask(event.currentTarget.value);
                 }
 
                 if (event.key === 'Escape') {
