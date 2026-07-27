@@ -239,9 +239,7 @@ function fullDateLabel() {
 function App() {
   const [tasks, setTasks] = useState(readTasks);
   const [draft, setDraft] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const addInputRef = useRef(null);
   const editInputRef = useRef(null);
 
   const validTasks = useMemo(() => normalizeTasks(tasks), [tasks]);
@@ -268,11 +266,6 @@ function App() {
       image.src = src;
     });
   }, []);
-
-  useEffect(() => {
-    if (!isAdding) return;
-    addInputRef.current?.focus({ preventScroll: true });
-  }, [isAdding]);
 
   useEffect(() => {
     if (!editingTask?.id) return;
@@ -312,7 +305,6 @@ function App() {
 
     commitTasks([...validTasks, createTask(trimmed)]);
     setDraft('');
-    setIsAdding(false);
   }
 
   function updateTask(id, text) {
@@ -321,14 +313,8 @@ function App() {
     );
   }
 
-  function beginAddTask() {
-    setDraft('');
-    setIsAdding(true);
-  }
-
   function cancelDraftTask() {
     setDraft('');
-    setIsAdding(false);
   }
 
   function beginEditTask(task) {
@@ -366,7 +352,6 @@ function App() {
   function resetList() {
     commitTasks([]);
     setDraft('');
-    setIsAdding(false);
     setEditingTask(null);
   }
 
@@ -468,38 +453,29 @@ function App() {
           </div>
         )}
 
-        {isAdding ? (
-          <form className="add-form adding" onSubmit={addTask}>
-            <span className="add-space" aria-hidden="true" />
-            <input
-              ref={addInputRef}
-              name="priority"
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onBlur={(event) => addDraftTask(event.currentTarget.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  addDraftTask(event.currentTarget.value);
-                }
+        <form className="add-form" onSubmit={addTask}>
+          <span className="add-space" aria-hidden="true">+</span>
+          <input
+            name="priority"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onBlur={(event) => addDraftTask(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                addDraftTask(event.currentTarget.value);
+              }
 
-                if (event.key === 'Escape') {
-                  event.preventDefault();
-                  cancelDraftTask();
-                }
-              }}
-              placeholder="Type a priority..."
-              aria-label="Type a priority"
-            />
-            <button className="submit-hidden" type="submit" aria-label="Add priority" />
-            {!hasTasks && <p className="input-hint">Press Enter to add</p>}
-          </form>
-        ) : (
-          <button className="add-row" type="button" onClick={beginAddTask}>
-            <span aria-hidden="true">+</span>
-            <span>Add a priority</span>
-          </button>
-        )}
+              if (event.key === 'Escape') {
+                event.preventDefault();
+                cancelDraftTask();
+              }
+            }}
+            placeholder="Add a priority"
+            aria-label="Add a priority"
+          />
+          <button className="submit-hidden" type="submit" aria-label="Add priority" />
+        </form>
       </section>
     </main>
   );
