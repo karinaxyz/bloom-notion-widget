@@ -106,7 +106,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -373,7 +374,7 @@ h1 {
   transform: rotate(42deg);
 }
 
-.add-form textarea,
+.add-editor,
 .task-input,
 .task-text,
 .add-row {
@@ -432,17 +433,20 @@ h1 {
   color: var(--text-faint);
 }
 
-.add-form textarea {
+.add-editor {
   display: block;
-  height: 30px;
+  height: auto;
   max-height: 84px;
-  resize: none;
+  white-space: pre-wrap;
+  word-break: break-word;
   overflow: hidden;
   line-height: 1.35;
 }
 
-.add-form textarea::placeholder {
+.add-editor[data-empty="true"]::before {
   color: var(--placeholder);
+  content: "Add a priority";
+  pointer-events: none;
 }
 
 .task-input {
@@ -500,7 +504,7 @@ h1 {
 input:focus,
 textarea:focus,
 button:focus-visible,
-.add-form textarea:focus,
+.add-editor:focus,
 .task-input:focus {
   border-color: transparent;
   outline: 0;

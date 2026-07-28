@@ -308,8 +308,8 @@ function App() {
     setDraft('');
 
     if (addInputRef.current) {
-      addInputRef.current.value = '';
-      addInputRef.current.style.height = '';
+      addInputRef.current.textContent = '';
+      addInputRef.current.dataset.empty = 'true';
       window.requestAnimationFrame(() => {
         addInputRef.current?.focus({ preventScroll: true });
       });
@@ -325,8 +325,8 @@ function App() {
   function cancelDraftTask() {
     setDraft('');
     if (addInputRef.current) {
-      addInputRef.current.value = '';
-      addInputRef.current.style.height = '';
+      addInputRef.current.textContent = '';
+      addInputRef.current.dataset.empty = 'true';
     }
   }
 
@@ -367,14 +367,9 @@ function App() {
     setDraft('');
     setEditingTask(null);
     if (addInputRef.current) {
-      addInputRef.current.value = '';
-      addInputRef.current.style.height = '';
+      addInputRef.current.textContent = '';
+      addInputRef.current.dataset.empty = 'true';
     }
-  }
-
-  function resizeAddInput(element) {
-    element.style.height = 'auto';
-    element.style.height = `${element.scrollHeight}px`;
   }
 
   return (
@@ -477,18 +472,22 @@ function App() {
 
         <label className="add-form">
           <span className="add-space" aria-hidden="true">+</span>
-          <textarea
+          <span
             ref={addInputRef}
-            name="priority"
-            rows="1"
+            className="add-editor"
+            contentEditable
+            data-empty="true"
+            role="textbox"
+            suppressContentEditableWarning
             onInput={(event) => {
-              setDraft(event.currentTarget.value);
-              resizeAddInput(event.currentTarget);
+              const value = event.currentTarget.textContent || '';
+              setDraft(value);
+              event.currentTarget.dataset.empty = value.trim() ? 'false' : 'true';
             }}
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
-                addDraftTask(event.currentTarget.value);
+                addDraftTask(event.currentTarget.textContent || '');
               }
 
               if (event.key === 'Escape') {
@@ -496,7 +495,6 @@ function App() {
                 cancelDraftTask();
               }
             }}
-            placeholder="Add a priority"
             aria-label="Add a priority"
           />
         </label>
