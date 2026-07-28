@@ -238,12 +238,20 @@ function updateTask(id, text) {
   const trimmed = text.trim();
   if (!trimmed) {
     editingTaskId = null;
-    render();
+    removeTask(id);
     return;
   }
 
   commitTasks(tasks.map((task) => (task.id === id ? { ...task, text: trimmed } : task)));
   editingTaskId = null;
+}
+
+function removeTask(id) {
+  if (editingTaskId === id) {
+    editingTaskId = null;
+  }
+
+  commitTasks(tasks.filter((task) => task.id !== id));
 }
 
 function toggleTask(id) {
@@ -279,6 +287,7 @@ function renderTasks(validTasks) {
                   <span aria-hidden="true"></span>
                 </button>
                 <input class="${task.completed ? 'task-input editing done' : 'task-input editing'}" value="${text}" data-edit-input="${task.id}" aria-label="Edit priority" />
+                <button class="remove-button" type="button" data-remove-task="${task.id}" aria-label="Remove priority: ${text}">×</button>
               </div>
             `;
           }
@@ -291,6 +300,7 @@ function renderTasks(validTasks) {
               <button class="${textClass}" type="button" data-edit-task="${task.id}" aria-label="Edit priority: ${text}">
                 ${text}
               </button>
+              <button class="remove-button" type="button" data-remove-task="${task.id}" aria-label="Remove priority: ${text}">×</button>
             </div>
           `;
         })
@@ -387,6 +397,10 @@ function bindEvents(root) {
 
   root.querySelectorAll('[data-toggle-task]').forEach((button) => {
     button.addEventListener('click', () => toggleTask(button.dataset.toggleTask));
+  });
+
+  root.querySelectorAll('[data-remove-task]').forEach((button) => {
+    button.addEventListener('click', () => removeTask(button.dataset.removeTask));
   });
 
   root.querySelectorAll('[data-edit-task]').forEach((button) => {
