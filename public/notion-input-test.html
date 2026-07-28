@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A tiny input test for Notion embeds." />
+    <title>Notion Input Test</title>
+    <style>
+      :root {
+        color: rgba(55, 53, 47, 0.86);
+        background: transparent;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Helvetica, Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-width: 280px;
+        margin: 0;
+        background: transparent;
+      }
+
+      main {
+        display: grid;
+        gap: 12px;
+        width: min(100%, 420px);
+        padding: 18px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        color: rgba(55, 53, 47, 0.58);
+        font-size: 13px;
+      }
+
+      input {
+        min-height: 36px;
+        border: 1px solid rgba(55, 53, 47, 0.18);
+        border-radius: 6px;
+        padding: 6px 10px;
+        background: rgba(255, 255, 255, 0.6);
+        color: rgba(55, 53, 47, 0.86);
+        font: inherit;
+        outline: none;
+      }
+
+      input:focus {
+        border-color: rgba(73, 99, 66, 0.45);
+      }
+
+      button {
+        justify-self: start;
+        min-height: 32px;
+        border: 0;
+        border-radius: 6px;
+        padding: 6px 10px;
+        background: rgba(73, 99, 66, 0.12);
+        color: rgba(73, 99, 66, 0.92);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      p {
+        min-height: 22px;
+        margin: 0;
+        color: rgba(55, 53, 47, 0.7);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <label>
+        Type anything here
+        <input id="test-input" placeholder="Can you type in this box?" />
+      </label>
+      <button id="test-button" type="button">Add test text</button>
+      <p id="result">Nothing added yet.</p>
+    </main>
+    <script>
+      const input = document.querySelector("#test-input");
+      const button = document.querySelector("#test-button");
+      const result = document.querySelector("#result");
+
+      function addText() {
+        const value = input.value.trim();
+        result.textContent = value ? `Added: ${value}` : "Button clicked.";
+        input.value = "";
+        input.focus();
+      }
+
+      button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        addText();
+      });
+
+      button.addEventListener("click", addText);
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          addText();
+        }
+      });
+    </script>
+  </body>
+</html>
