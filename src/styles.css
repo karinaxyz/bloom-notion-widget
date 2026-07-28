@@ -331,10 +331,6 @@ h1 {
   min-height: 30px;
 }
 
-.task-row {
-  grid-template-columns: 28px minmax(0, 1fr) 24px;
-}
-
 .add-form.adding {
   grid-template-rows: auto auto;
 }
@@ -493,29 +489,6 @@ h1 {
 .reset-button:hover {
   background: var(--reset-hover-bg);
   color: var(--reset-hover-color);
-}
-
-.remove-button {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-faint);
-  font-size: 1rem;
-  line-height: 1;
-  opacity: 0.52;
-  transition: color 120ms ease, opacity 120ms ease, background 120ms ease;
-}
-
-.remove-button:hover,
-.remove-button:focus-visible {
-  background: var(--reset-hover-bg);
-  color: var(--reset-hover-color);
-  opacity: 1;
 }
 
 .add-row:hover {

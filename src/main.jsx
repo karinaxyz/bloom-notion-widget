@@ -287,7 +287,6 @@ function renderTasks(validTasks) {
                   <span aria-hidden="true"></span>
                 </button>
                 <input class="${task.completed ? 'task-input editing done' : 'task-input editing'}" value="${text}" data-edit-input="${task.id}" aria-label="Edit priority" />
-                <button class="remove-button" type="button" data-remove-task="${task.id}" aria-label="Remove priority: ${text}">×</button>
               </div>
             `;
           }
@@ -300,7 +299,6 @@ function renderTasks(validTasks) {
               <button class="${textClass}" type="button" data-edit-task="${task.id}" aria-label="Edit priority: ${text}">
                 ${text}
               </button>
-              <button class="remove-button" type="button" data-remove-task="${task.id}" aria-label="Remove priority: ${text}">×</button>
             </div>
           `;
         })
@@ -399,19 +397,31 @@ function bindEvents(root) {
     button.addEventListener('click', () => toggleTask(button.dataset.toggleTask));
   });
 
-  root.querySelectorAll('[data-remove-task]').forEach((button) => {
-    button.addEventListener('click', () => removeTask(button.dataset.removeTask));
-  });
-
   root.querySelectorAll('[data-edit-task]').forEach((button) => {
     button.addEventListener('click', () => {
       editingTaskId = button.dataset.editTask;
       render();
     });
+
+    button.addEventListener('keydown', (event) => {
+      if (event.key === 'Backspace' || event.key === 'Delete') {
+        event.preventDefault();
+        removeTask(button.dataset.editTask);
+      }
+    });
   });
 
   root.querySelectorAll('[data-edit-input]').forEach((input) => {
     input.addEventListener('keydown', (event) => {
+      if (
+        (event.key === 'Backspace' || event.key === 'Delete') &&
+        input.value.trim() === ''
+      ) {
+        event.preventDefault();
+        removeTask(input.dataset.editInput);
+        return;
+      }
+
       if (event.key === 'Enter') {
         event.preventDefault();
         updateTask(input.dataset.editInput, input.value);
