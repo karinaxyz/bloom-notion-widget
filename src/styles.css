@@ -388,6 +388,10 @@ h1 {
   outline: 0;
 }
 
+.add-form {
+  cursor: text;
+}
+
 .task-text,
 .add-row {
   justify-items: start;
@@ -424,8 +428,11 @@ h1 {
 }
 
 .add-space {
+  display: grid;
+  place-items: center;
   width: 26px;
   height: 26px;
+  color: var(--text-faint);
 }
 
 .task-input {

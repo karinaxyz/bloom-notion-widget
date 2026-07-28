@@ -1,5 +1,3 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { createRoot } from 'react-dom/client';
 import './styles.css';
 
 const LEGACY_STORAGE_KEY = 'harvest.tasks.v1';
@@ -73,37 +71,23 @@ const EMPTY_GLOW = {
 };
 
 const PROGRESS_GLOWS = [
-  {
-    background: 'var(--glow-0)',
-    opacity: 0.68,
-    scale: 0.78,
-  },
-  {
-    background: 'var(--glow-1)',
-    opacity: 0.72,
-    scale: 0.8,
-  },
-  {
-    background: 'var(--glow-2)',
-    opacity: 0.76,
-    scale: 0.82,
-  },
-  {
-    background: 'var(--glow-3)',
-    opacity: 0.8,
-    scale: 0.85,
-  },
-  {
-    background: 'var(--glow-4)',
-    opacity: 0.84,
-    scale: 0.88,
-  },
-  {
-    background: 'var(--glow-complete)',
-    opacity: 0.88,
-    scale: 0.9,
-  },
+  { background: 'var(--glow-0)', opacity: 0.68, scale: 0.78 },
+  { background: 'var(--glow-1)', opacity: 0.72, scale: 0.8 },
+  { background: 'var(--glow-2)', opacity: 0.76, scale: 0.82 },
+  { background: 'var(--glow-3)', opacity: 0.8, scale: 0.85 },
+  { background: 'var(--glow-4)', opacity: 0.84, scale: 0.88 },
+  { background: 'var(--glow-complete)', opacity: 0.88, scale: 0.9 },
 ];
+
+let tasks = readTasks();
+let editingTaskId = null;
+let previousGlowState = null;
+let previousGlowTimer = null;
+let activeGlowState = getGlowState(
+  getCompletedCount(tasks),
+  normalizeTasks(tasks).length,
+  getBloomStateIndex(getCompletedCount(tasks), normalizeTasks(tasks).length)
+);
 
 function normalizeTasks(value) {
   return Array.isArray(value) ? value.filter((task) => task?.text) : [];
@@ -112,27 +96,41 @@ function normalizeTasks(value) {
 function readTasks() {
   try {
     const storedValue =
-      localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+      getStoredValue(STORAGE_KEY) || getStoredValue(LEGACY_STORAGE_KEY);
     const stored = JSON.parse(storedValue || '[]');
-    const tasks = normalizeTasks(stored);
+    const normalizedTasks = normalizeTasks(stored);
 
-    if (!localStorage.getItem(STORAGE_KEY) && tasks.length > 0) {
-      saveTasks(tasks);
+    if (!getStoredValue(STORAGE_KEY) && normalizedTasks.length > 0) {
+      saveTasks(normalizedTasks);
     }
 
-    return tasks;
+    return normalizedTasks;
   } catch {
     return [];
   }
 }
 
-function saveTasks(tasks) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+function saveTasks(nextTasks) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextTasks));
+  } catch {
+    // Notion can restrict storage; the current page state still remains usable.
+  }
+}
+
+function getStoredValue(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
 }
 
 function createTask(text) {
   return {
-    id: crypto.randomUUID(),
+    id:
+      crypto?.randomUUID?.() ||
+      `${Date.now()}-${Math.random().toString(16).slice(2)}`,
     text: text.trim(),
     completed: false,
   };
@@ -143,8 +141,8 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-function getCompletedCount(tasks) {
-  return normalizeTasks(tasks).filter((task) => task.completed).length;
+function getCompletedCount(value) {
+  return normalizeTasks(value).filter((task) => task.completed).length;
 }
 
 function getBloomStateIndex(completedTasks, totalTasks) {
@@ -168,312 +166,259 @@ function getGlowState(completedTasks, totalTasks, bloomStateIndex) {
   return PROGRESS_GLOWS[bloomStateIndex] || PROGRESS_GLOWS[0];
 }
 
-function glowLayerStyle(glowState) {
-  return {
-    '--glow-layer': glowState.background,
-    '--glow-layer-opacity': glowState.opacity,
-    '--glow-layer-scale': glowState.scale,
-  };
-}
-
-function artworkLayoutStyle(layout) {
-  return {
-    '--artwork-stage-height': `${layout.stageHeight}px`,
-    '--glow-top': layout.glowTop,
-    '--glow-right': layout.glowRight,
-    '--glow-bottom': layout.glowBottom,
-    '--glow-left': layout.glowLeft,
-    '--glow-origin-y': layout.glowOriginY,
-  };
-}
-
 function formatToday() {
   const now = new Date();
 
   return {
-    weekday: new Intl.DateTimeFormat(undefined, {
+    weekday: new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(now),
+    date: new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric' }).format(now),
+    full: new Intl.DateTimeFormat(undefined, {
       weekday: 'long',
-    }).format(now),
-    date: new Intl.DateTimeFormat(undefined, {
       month: 'long',
       day: 'numeric',
     }).format(now),
   };
 }
 
-function DisplayDate() {
-  const today = formatToday();
+function escapeHTML(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
 
-  return (
-    <header className="date-stack">
-      <p className="weekday">{today.weekday}</p>
-      <p className="date-line">{today.date}</p>
-    </header>
+function styleVars(values) {
+  return Object.entries(values)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join('; ');
+}
+
+function glowLayerStyle(glowState) {
+  return styleVars({
+    '--glow-layer': glowState.background,
+    '--glow-layer-opacity': glowState.opacity,
+    '--glow-layer-scale': glowState.scale,
+  });
+}
+
+function artworkLayoutStyle(layout) {
+  return styleVars({
+    '--artwork-stage-height': `${layout.stageHeight}px`,
+    '--glow-top': layout.glowTop,
+    '--glow-right': layout.glowRight,
+    '--glow-bottom': layout.glowBottom,
+    '--glow-left': layout.glowLeft,
+    '--glow-origin-y': layout.glowOriginY,
+  });
+}
+
+function commitTasks(nextTasks) {
+  tasks = normalizeTasks(nextTasks);
+  saveTasks(tasks);
+  render();
+}
+
+function addTaskFromInput(input) {
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  commitTasks([...tasks, createTask(text)]);
+  requestAnimationFrame(() => {
+    const nextInput = document.querySelector('[data-add-input]');
+    if (nextInput) {
+      nextInput.focus({ preventScroll: true });
+    }
+  });
+}
+
+function updateTask(id, text) {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    editingTaskId = null;
+    render();
+    return;
+  }
+
+  commitTasks(tasks.map((task) => (task.id === id ? { ...task, text: trimmed } : task)));
+  editingTaskId = null;
+}
+
+function toggleTask(id) {
+  commitTasks(
+    tasks.map((task) =>
+      task.id === id ? { ...task, completed: !task.completed } : task
+    )
   );
 }
 
-function fullDateLabel() {
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date());
+function resetList() {
+  tasks = [];
+  editingTaskId = null;
+  saveTasks(tasks);
+  render();
 }
 
-function App() {
-  const [tasks, setTasks] = useState(readTasks);
-  const [draft, setDraft] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
+function renderTasks(validTasks) {
+  if (validTasks.length === 0) return '';
 
-  const validTasks = useMemo(() => normalizeTasks(tasks), [tasks]);
-  const completedCount = useMemo(() => getCompletedCount(validTasks), [validTasks]);
-  const bloomStateIndex = useMemo(
-    () => getBloomStateIndex(completedCount, validTasks.length),
-    [completedCount, validTasks.length]
-  );
-  const hasTasks = validTasks.length > 0;
+  return `
+    <div class="task-list" aria-label="Today priorities">
+      ${validTasks
+        .map((task) => {
+          const text = escapeHTML(task.text);
+          const checkedClass = task.completed ? 'check-button checked' : 'check-button';
+          const textClass = task.completed ? 'task-text done' : 'task-text';
+
+          if (editingTaskId === task.id) {
+            return `
+              <div class="task-row" data-task-id="${task.id}">
+                <button class="${checkedClass}" type="button" data-toggle-task="${task.id}" aria-label="${task.completed ? 'Mark incomplete' : 'Mark complete'}">
+                  <span aria-hidden="true"></span>
+                </button>
+                <input class="${task.completed ? 'task-input editing done' : 'task-input editing'}" value="${text}" data-edit-input="${task.id}" aria-label="Edit priority" />
+              </div>
+            `;
+          }
+
+          return `
+            <div class="task-row" data-task-id="${task.id}">
+              <button class="${checkedClass}" type="button" data-toggle-task="${task.id}" aria-label="${task.completed ? 'Mark incomplete' : 'Mark complete'}">
+                <span aria-hidden="true"></span>
+              </button>
+              <button class="${textClass}" type="button" data-edit-task="${task.id}" aria-label="Edit priority: ${text}">
+                ${text}
+              </button>
+            </div>
+          `;
+        })
+        .join('')}
+    </div>
+  `;
+}
+
+function render() {
+  const validTasks = normalizeTasks(tasks);
+  const completedCount = getCompletedCount(validTasks);
+  const bloomStateIndex = getBloomStateIndex(completedCount, validTasks.length);
   const artwork = BLOOM_STATES[bloomStateIndex] || BLOOM_STATES[FULL_BLOOM_STATE_INDEX];
   const artworkLayout =
     BLOOM_ARTWORK_LAYOUTS[bloomStateIndex] ||
     BLOOM_ARTWORK_LAYOUTS[FULL_BLOOM_STATE_INDEX];
-  const glowState = useMemo(
-    () => getGlowState(completedCount, validTasks.length, bloomStateIndex),
-    [bloomStateIndex, completedCount, validTasks.length]
-  );
-  const [activeGlowState, setActiveGlowState] = useState(glowState);
-  const [previousGlowState, setPreviousGlowState] = useState(null);
+  const glowState = getGlowState(completedCount, validTasks.length, bloomStateIndex);
 
-  useEffect(() => {
-    BLOOM_STATES.forEach((src) => {
-      const image = new Image();
-      image.src = src;
-    });
-  }, []);
-
-  useEffect(() => {
-    if (activeGlowState.background === glowState.background) return undefined;
-
-    setPreviousGlowState(activeGlowState);
-    setActiveGlowState(glowState);
-
-    const timer = window.setTimeout(() => {
-      setPreviousGlowState(null);
+  if (activeGlowState.background !== glowState.background) {
+    previousGlowState = activeGlowState;
+    activeGlowState = glowState;
+    window.clearTimeout(previousGlowTimer);
+    previousGlowTimer = window.setTimeout(() => {
+      previousGlowState = null;
+      render();
     }, 440);
-
-    return () => window.clearTimeout(timer);
-  }, [glowState]);
-
-  function commitTasks(nextTasks) {
-    const normalizedTasks = normalizeTasks(nextTasks);
-    setTasks(normalizedTasks);
-    saveTasks(normalizedTasks);
   }
 
-  function addTask(event) {
-    event.preventDefault();
-    addDraftTask();
-  }
+  const today = formatToday();
+  const root = document.getElementById('root');
 
-  function addDraftTask() {
-    const trimmed = draft.trim();
-    if (!trimmed) {
-      cancelDraftTask();
-      return;
-    }
-
-    commitTasks([...validTasks, createTask(trimmed)]);
-    setDraft('');
-    setIsAdding(false);
-  }
-
-  function updateTask(id, text) {
-    commitTasks(
-      tasks.map((task) => (task.id === id ? { ...task, text } : task))
-    );
-  }
-
-  function beginAddTask() {
-    setDraft('');
-    setIsAdding(true);
-  }
-
-  function cancelDraftTask() {
-    setDraft('');
-    setIsAdding(false);
-  }
-
-  function beginEditTask(task) {
-    setEditingTask({
-      id: task.id,
-      text: task.text,
-    });
-  }
-
-  function settleEditedTask() {
-    if (!editingTask) return;
-
-    const trimmed = editingTask.text.trim();
-    if (!trimmed) {
-      setEditingTask(null);
-      return;
-    }
-
-    updateTask(editingTask.id, trimmed);
-    setEditingTask(null);
-  }
-
-  function cancelEditedTask() {
-    setEditingTask(null);
-  }
-
-  function toggleTask(id) {
-    commitTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  }
-
-  function resetList() {
-    commitTasks([]);
-    setDraft('');
-    setIsAdding(false);
-    setEditingTask(null);
-  }
-
-  return (
-    <main className="widget" aria-label="Bloom botanical task widget">
-      <section className="art-panel" aria-live="polite">
-        <DisplayDate />
-        <div className="artwork-wrap" style={artworkLayoutStyle(artworkLayout)}>
-          <div className="artwork-stage">
-            {previousGlowState && (
-              <span
-                className="artwork-glow previous"
-                style={glowLayerStyle(previousGlowState)}
-                aria-hidden="true"
-              />
-            )}
-            <span
-              className="artwork-glow current"
-              key={activeGlowState.background}
-              style={glowLayerStyle(activeGlowState)}
-              aria-hidden="true"
-            />
-            <img
-              className="botanical-art"
-              src={artwork}
-              alt={`Botanical illustration showing task progress for ${fullDateLabel()}`}
-              onError={(event) => {
-                event.currentTarget.onerror = null;
-                event.currentTarget.src = BLOOM_STATES[FULL_BLOOM_STATE_INDEX];
-              }}
-            />
+  root.innerHTML = `
+    <main class="widget" aria-label="Bloom botanical task widget">
+      <section class="art-panel" aria-live="polite">
+        <header class="date-stack">
+          <p class="weekday">${escapeHTML(today.weekday)}</p>
+          <p class="date-line">${escapeHTML(today.date)}</p>
+        </header>
+        <div class="artwork-wrap" style="${artworkLayoutStyle(artworkLayout)}">
+          <div class="artwork-stage">
+            ${
+              previousGlowState
+                ? `<span class="artwork-glow previous" style="${glowLayerStyle(previousGlowState)}" aria-hidden="true"></span>`
+                : ''
+            }
+            <span class="artwork-glow current" style="${glowLayerStyle(activeGlowState)}" aria-hidden="true"></span>
+            <img class="botanical-art" src="${artwork}" alt="Botanical illustration showing task progress for ${escapeHTML(today.full)}" />
           </div>
         </div>
       </section>
 
-      <section className="task-panel">
-        <div className="priority-heading">
-          <span className="priority-title">
+      <section class="task-panel">
+        <div class="priority-heading">
+          <span class="priority-title">
             <h1>Priorities</h1>
           </span>
-          {hasTasks && (
-            <button
-              className="reset-button"
-              type="button"
-              onClick={resetList}
-              aria-label="Reset list"
-            >
-              ↺
-            </button>
-          )}
+          ${
+            validTasks.length > 0
+              ? '<button class="reset-button" type="button" data-reset-list aria-label="Reset list">↺</button>'
+              : ''
+          }
         </div>
 
-        {hasTasks && (
-          <div className="task-list" aria-label="Today priorities">
-            {validTasks.map((task) => (
-              <div className="task-row" key={task.id}>
-                <button
-                  className={task.completed ? 'check-button checked' : 'check-button'}
-                  type="button"
-                  onClick={() => toggleTask(task.id)}
-                  aria-label={task.completed ? 'Mark incomplete' : 'Mark complete'}
-                >
-                  <span aria-hidden="true" />
-                </button>
-                {editingTask?.id === task.id ? (
-                  <input
-                    autoFocus
-                    className={task.completed ? 'task-input editing done' : 'task-input editing'}
-                    value={editingTask.text}
-                    onChange={(event) =>
-                      setEditingTask({ ...editingTask, text: event.target.value })
-                    }
-                    onBlur={settleEditedTask}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        settleEditedTask();
-                      }
+        ${renderTasks(validTasks)}
 
-                      if (event.key === 'Escape') {
-                        event.preventDefault();
-                        cancelEditedTask();
-                      }
-                    }}
-                    aria-label="Edit priority"
-                  />
-                ) : (
-                  <button
-                    className={task.completed ? 'task-text done' : 'task-text'}
-                    type="button"
-                    onClick={() => beginEditTask(task)}
-                    aria-label={`Edit priority: ${task.text}`}
-                  >
-                    {task.text}
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {isAdding ? (
-          <form className="add-form adding" onSubmit={addTask}>
-            <span className="add-space" aria-hidden="true" />
-            <input
-              autoFocus
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onBlur={addDraftTask}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  addDraftTask();
-                }
-
-                if (event.key === 'Escape') {
-                  event.preventDefault();
-                  cancelDraftTask();
-                }
-              }}
-              placeholder="Type a priority..."
-              aria-label="Type a priority"
-            />
-            <button className="submit-hidden" type="submit" aria-label="Add priority" />
-            {!hasTasks && <p className="input-hint">Press Enter to add</p>}
-          </form>
-        ) : (
-          <button className="add-row" type="button" onClick={beginAddTask}>
-            <span aria-hidden="true">+</span>
-            <span>Add a priority</span>
-          </button>
-        )}
+        <label class="add-form">
+          <span class="add-space" aria-hidden="true">+</span>
+          <input data-add-input placeholder="Add a priority" aria-label="Add a priority" />
+        </label>
       </section>
     </main>
-  );
+  `;
+
+  bindEvents(root);
+
+  const editingInput = root.querySelector('[data-edit-input]');
+  if (editingInput) {
+    editingInput.focus({ preventScroll: true });
+    editingInput.setSelectionRange(editingInput.value.length, editingInput.value.length);
+  }
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+function bindEvents(root) {
+  root.querySelector('[data-add-input]')?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      addTaskFromInput(event.currentTarget);
+    }
+  });
+
+  root.querySelector('[data-add-input]')?.addEventListener('blur', (event) => {
+    addTaskFromInput(event.currentTarget);
+  });
+
+  root.querySelectorAll('[data-toggle-task]').forEach((button) => {
+    button.addEventListener('click', () => toggleTask(button.dataset.toggleTask));
+  });
+
+  root.querySelectorAll('[data-edit-task]').forEach((button) => {
+    button.addEventListener('click', () => {
+      editingTaskId = button.dataset.editTask;
+      render();
+    });
+  });
+
+  root.querySelectorAll('[data-edit-input]').forEach((input) => {
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        updateTask(input.dataset.editInput, input.value);
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        editingTaskId = null;
+        render();
+      }
+    });
+
+    input.addEventListener('blur', () => updateTask(input.dataset.editInput, input.value));
+  });
+
+  root.querySelector('[data-reset-list]')?.addEventListener('click', resetList);
+}
+
+BLOOM_STATES.forEach((src) => {
+  const image = new Image();
+  image.src = src;
+});
+
+render();
