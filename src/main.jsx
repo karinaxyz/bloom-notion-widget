@@ -1,11 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 
 const LEGACY_STORAGE_KEY = 'harvest.tasks.v1';
 const STORAGE_KEY = 'bloom.tasks.v1';
 const bloomAssetPath = (filename) => `${import.meta.env.BASE_URL}bloom-display/${filename}`;
-let memoryTasks = [];
 
 const BLOOM_ARTWORK_LAYOUTS = [
   {
@@ -112,46 +111,31 @@ function normalizeTasks(value) {
 
 function readTasks() {
   try {
-    const storedValue = getStoredValue(STORAGE_KEY) || getStoredValue(LEGACY_STORAGE_KEY);
+    const storedValue =
+      localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
     const stored = JSON.parse(storedValue || '[]');
     const tasks = normalizeTasks(stored);
 
-    if (!getStoredValue(STORAGE_KEY) && tasks.length > 0) {
+    if (!localStorage.getItem(STORAGE_KEY) && tasks.length > 0) {
       saveTasks(tasks);
     }
 
     return tasks;
   } catch {
-    return memoryTasks;
+    return [];
   }
 }
 
 function saveTasks(tasks) {
-  memoryTasks = normalizeTasks(tasks);
-
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(memoryTasks));
-  } catch {
-    // Embedded surfaces can block storage. Keep the widget usable in-session.
-  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
 }
 
 function createTask(text) {
   return {
-    id:
-      window.crypto?.randomUUID?.() ||
-      `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    id: crypto.randomUUID(),
     text: text.trim(),
     completed: false,
   };
-}
-
-function getStoredValue(key) {
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
-  }
 }
 
 function clamp(value, min, max) {
@@ -239,10 +223,8 @@ function fullDateLabel() {
 function App() {
   const [tasks, setTasks] = useState(readTasks);
   const [draft, setDraft] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const addInputRef = useRef(null);
-  const editInputRef = useRef(null);
-  const tasksRef = useRef([]);
 
   const validTasks = useMemo(() => normalizeTasks(tasks), [tasks]);
   const completedCount = useMemo(() => getCompletedCount(validTasks), [validTasks]);
@@ -270,15 +252,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    tasksRef.current = validTasks;
-  }, [validTasks]);
-
-  useEffect(() => {
-    if (!editingTask?.id) return;
-    editInputRef.current?.focus({ preventScroll: true });
-  }, [editingTask?.id]);
-
-  useEffect(() => {
     if (activeGlowState.background === glowState.background) return undefined;
 
     setPreviousGlowState(activeGlowState);
@@ -297,23 +270,21 @@ function App() {
     saveTasks(normalizedTasks);
   }
 
-  function addDraftTask(nextDraft = draft) {
-    const trimmed = nextDraft.trim();
+  function addTask(event) {
+    event.preventDefault();
+    addDraftTask();
+  }
+
+  function addDraftTask() {
+    const trimmed = draft.trim();
     if (!trimmed) {
       cancelDraftTask();
       return;
     }
 
-    commitTasks([...tasksRef.current, createTask(trimmed)]);
+    commitTasks([...validTasks, createTask(trimmed)]);
     setDraft('');
-
-    if (addInputRef.current) {
-      addInputRef.current.textContent = '';
-      addInputRef.current.dataset.empty = 'true';
-      window.requestAnimationFrame(() => {
-        addInputRef.current?.focus({ preventScroll: true });
-      });
-    }
+    setIsAdding(false);
   }
 
   function updateTask(id, text) {
@@ -322,12 +293,14 @@ function App() {
     );
   }
 
+  function beginAddTask() {
+    setDraft('');
+    setIsAdding(true);
+  }
+
   function cancelDraftTask() {
     setDraft('');
-    if (addInputRef.current) {
-      addInputRef.current.textContent = '';
-      addInputRef.current.dataset.empty = 'true';
-    }
+    setIsAdding(false);
   }
 
   function beginEditTask(task) {
@@ -365,11 +338,8 @@ function App() {
   function resetList() {
     commitTasks([]);
     setDraft('');
+    setIsAdding(false);
     setEditingTask(null);
-    if (addInputRef.current) {
-      addInputRef.current.textContent = '';
-      addInputRef.current.dataset.empty = 'true';
-    }
   }
 
   return (
@@ -435,7 +405,7 @@ function App() {
                 </button>
                 {editingTask?.id === task.id ? (
                   <input
-                    ref={editInputRef}
+                    autoFocus
                     className={task.completed ? 'task-input editing done' : 'task-input editing'}
                     value={editingTask.text}
                     onChange={(event) =>
@@ -470,34 +440,37 @@ function App() {
           </div>
         )}
 
-        <label className="add-form">
-          <span className="add-space" aria-hidden="true">+</span>
-          <span
-            ref={addInputRef}
-            className="add-editor"
-            contentEditable
-            data-empty="true"
-            role="textbox"
-            suppressContentEditableWarning
-            onInput={(event) => {
-              const value = event.currentTarget.textContent || '';
-              setDraft(value);
-              event.currentTarget.dataset.empty = value.trim() ? 'false' : 'true';
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                addDraftTask(event.currentTarget.textContent || '');
-              }
+        {isAdding ? (
+          <form className="add-form adding" onSubmit={addTask}>
+            <span className="add-space" aria-hidden="true" />
+            <input
+              autoFocus
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onBlur={addDraftTask}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  addDraftTask();
+                }
 
-              if (event.key === 'Escape') {
-                event.preventDefault();
-                cancelDraftTask();
-              }
-            }}
-            aria-label="Add a priority"
-          />
-        </label>
+                if (event.key === 'Escape') {
+                  event.preventDefault();
+                  cancelDraftTask();
+                }
+              }}
+              placeholder="Type a priority..."
+              aria-label="Type a priority"
+            />
+            <button className="submit-hidden" type="submit" aria-label="Add priority" />
+            {!hasTasks && <p className="input-hint">Press Enter to add</p>}
+          </form>
+        ) : (
+          <button className="add-row" type="button" onClick={beginAddTask}>
+            <span aria-hidden="true">+</span>
+            <span>Add a priority</span>
+          </button>
+        )}
       </section>
     </main>
   );

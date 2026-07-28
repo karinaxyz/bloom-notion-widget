@@ -106,8 +106,7 @@ body {
 }
 
 button,
-input,
-textarea {
+input {
   font: inherit;
 }
 
@@ -267,7 +266,6 @@ h1 {
   object-position: center bottom;
   opacity: 0.92;
   filter: var(--art-filter);
-  pointer-events: none;
   transform-origin: 50% 100%;
   transition: opacity 300ms ease;
   animation: artwork-fade 180ms ease;
@@ -374,7 +372,7 @@ h1 {
   transform: rotate(42deg);
 }
 
-.add-editor,
+.add-form input,
 .task-input,
 .task-text,
 .add-row {
@@ -388,10 +386,6 @@ h1 {
   color: var(--text-primary);
   box-shadow: none;
   outline: 0;
-}
-
-.add-form {
-  cursor: text;
 }
 
 .task-text,
@@ -425,28 +419,13 @@ h1 {
   color: var(--text-faint);
 }
 
+.add-form input::placeholder {
+  color: var(--placeholder);
+}
+
 .add-space {
-  display: grid;
-  place-items: center;
   width: 26px;
   height: 26px;
-  color: var(--text-faint);
-}
-
-.add-editor {
-  display: block;
-  height: auto;
-  max-height: 84px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow: hidden;
-  line-height: 1.35;
-}
-
-.add-editor[data-empty="true"]::before {
-  color: var(--placeholder);
-  content: "Add a priority";
-  pointer-events: none;
 }
 
 .task-input {
@@ -502,9 +481,8 @@ h1 {
 }
 
 input:focus,
-textarea:focus,
 button:focus-visible,
-.add-editor:focus,
+.add-form input:focus,
 .task-input:focus {
   border-color: transparent;
   outline: 0;
