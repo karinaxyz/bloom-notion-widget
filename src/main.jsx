@@ -5,7 +5,6 @@ import './styles.css';
 const LEGACY_STORAGE_KEY = 'harvest.tasks.v1';
 const STORAGE_KEY = 'bloom.tasks.v1';
 const bloomAssetPath = (filename) => `${import.meta.env.BASE_URL}bloom-display/${filename}`;
-let memoryTasks = [];
 
 const BLOOM_ARTWORK_LAYOUTS = [
   {
@@ -113,46 +112,30 @@ function normalizeTasks(value) {
 function readTasks() {
   try {
     const storedValue =
-      getStoredValue(STORAGE_KEY) || getStoredValue(LEGACY_STORAGE_KEY);
+      localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
     const stored = JSON.parse(storedValue || '[]');
     const tasks = normalizeTasks(stored);
 
-    if (!getStoredValue(STORAGE_KEY) && tasks.length > 0) {
+    if (!localStorage.getItem(STORAGE_KEY) && tasks.length > 0) {
       saveTasks(tasks);
     }
 
     return tasks;
   } catch {
-    return memoryTasks;
+    return [];
   }
 }
 
 function saveTasks(tasks) {
-  memoryTasks = normalizeTasks(tasks);
-
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(memoryTasks));
-  } catch {
-    // Notion embeds can restrict storage. Keep the widget usable in-session.
-  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
 }
 
 function createTask(text) {
   return {
-    id:
-      crypto?.randomUUID?.() ||
-      `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    id: crypto.randomUUID(),
     text: text.trim(),
     completed: false,
   };
-}
-
-function getStoredValue(key) {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
 }
 
 function clamp(value, min, max) {
@@ -310,8 +293,7 @@ function App() {
     );
   }
 
-  function beginAddTask(event) {
-    event?.preventDefault();
+  function beginAddTask() {
     setDraft('');
     setIsAdding(true);
   }
@@ -484,12 +466,7 @@ function App() {
             {!hasTasks && <p className="input-hint">Press Enter to add</p>}
           </form>
         ) : (
-          <button
-            className="add-row"
-            type="button"
-            onPointerDown={beginAddTask}
-            onClick={beginAddTask}
-          >
+          <button className="add-row" type="button" onClick={beginAddTask}>
             <span aria-hidden="true">+</span>
             <span>Add a priority</span>
           </button>
